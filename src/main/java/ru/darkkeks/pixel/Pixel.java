@@ -81,13 +81,12 @@ public class Pixel {
         Pixel pixel = (Pixel) o;
         return x == pixel.x &&
                 y == pixel.y &&
-                flag == pixel.flag &&
                 color.equals(pixel.color);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(x, y, color, flag);
+        return Objects.hash(x, y, color);
     }
 
     @Override

@@ -91,6 +91,10 @@ public class PixelAccount implements MessageHandler {
                 }
                 ttl = result.get("ttl").getAsInt();
                 break;
+            case 3:
+                System.out.println("Server asked for a restart :)");
+                websocketClient.close();
+                break;
             case 8:
                 break;
             default:

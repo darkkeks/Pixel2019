@@ -24,15 +24,19 @@ public class Controller {
     private Set<PixelAccount> accounts;
     private ScheduledThreadPoolExecutor executor;
 
+    private HealthCheck healthCheck;
+    private int lastMinuteStats;
+
     public Controller(LoginCredentials observerCredentials, Template template) {
         this.template = template;
         this.accounts = new HashSet<>();
 
-        executor = new ScheduledThreadPoolExecutor(1); // TODO Single thread to prevent threading issues :)
+        executor = new ScheduledThreadPoolExecutor(4); // TODO Single thread to prevent threading issues :)
         graphics = new BoardGraphics(new BufferedImage(Constants.WIDTH, Constants.HEIGHT, BufferedImage.TYPE_INT_RGB));
         graphics.setTemplate(template);
         httpClient = HttpClient.newHttpClient();
 
+        healthCheck = new HealthCheck();
         queue = new PixelQueue(template);
 
         startTicker();
@@ -47,14 +51,22 @@ public class Controller {
 
     private void runBot() {
         executor.scheduleAtFixedRate(() -> {
+            System.out.println("Accounts active: " + accounts.size());
             System.out.println("Current queue size: " + queue.size());
             accounts.forEach(account -> {
                 if (account.canPlace()) {
                     if (queue.size() > 0) {
-                        PixelQueue.Point pixel = queue.pop();
-                        Color color = template.getColor(pixel.getX(), pixel.getY());
-                        System.out.println("Placing pixel x=" + pixel.getX() + ", y=" + pixel.getY());
-                        account.sendPixel(Pixel.place(pixel.getX(), pixel.getY(), color));
+                        PixelQueue.Point point = queue.pop();
+                        Color color = template.getColor(point.getX(), point.getY());
+                        System.out.println("Placing pixel x=" + point.getX() + ", y=" + point.getY());
+                        Pixel pixel = Pixel.place(point.getX(), point.getY(), color);
+                        account.sendPixel(pixel);
+                        healthCheck.onPixel(pixel);
+                        executor.schedule(() -> {
+                            if (healthCheck.checkHealth(pixel)) {
+                                lastMinuteStats++;
+                            }
+                        }, 10, TimeUnit.SECONDS);
                     }
                 }
             });
@@ -64,6 +76,11 @@ public class Controller {
             System.out.println("Rebuilding queue");
             queue.rebuild(graphics.getImage());
         }, 0, 30, TimeUnit.SECONDS);
+
+        executor.scheduleAtFixedRate(() -> {
+            System.out.println("Placed during last minute: " + lastMinuteStats);
+            lastMinuteStats = 0;
+        }, 0, 60, TimeUnit.SECONDS);
     }
 
     private void startTicker() {
@@ -74,12 +91,14 @@ public class Controller {
 
     private void reconnect(PixelAccount account) {
         accounts.remove(account);
-        addAccount(account.getLoginSignature()).thenAccept(newAccount -> {
-            if (account == observer) {
-                observer = newAccount;
-                hookObserver();
-            }
-        });
+        executor.schedule(() -> {
+            addAccount(account.getLoginSignature()).thenAccept(newAccount -> {
+                if (account == observer) {
+                    observer = newAccount;
+                    hookObserver();
+                }
+            });
+        }, 5, TimeUnit.SECONDS);
     }
 
     public CompletableFuture<PixelAccount> addAccount(LoginCredentials credentials) {
@@ -98,6 +117,7 @@ public class Controller {
         });
 
         observer.setPixelConsumer(pixel -> {
+            healthCheck.onPixel(pixel);
             queue.onPixelChange(pixel);
             if (graphics != null) {
                 graphics.setPixel(pixel.getX(), pixel.getY(), pixel.getColor());

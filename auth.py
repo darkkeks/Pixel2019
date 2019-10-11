@@ -1,6 +1,5 @@
 import requests
 import time
-import sys
 
 
 def get_token(username, password):
@@ -35,7 +34,13 @@ def get_url(token):
 #
 # exit(0)
 
-# accs = [
+accs = [
+    'login:pass',
+    'login:pass',
+    'login:pass',
+    'login:pass',
+    'login:pass',
+    'login:pass'
 ]
 
 for account in accs:
