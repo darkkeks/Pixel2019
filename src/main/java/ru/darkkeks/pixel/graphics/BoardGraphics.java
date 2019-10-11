@@ -164,7 +164,7 @@ public class BoardGraphics {
                 return;
             if(e.getWheelRotation() < 0)
                 zoomIn(x, y);
-            else
+            else if (e.getWheelRotation() > 0)
                 zoomOut(x, y);
 
             checkBorders();
