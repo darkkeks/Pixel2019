@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public class PixelAccount implements MessageHandler {
@@ -58,7 +59,7 @@ public class PixelAccount implements MessageHandler {
         return wait == 0;
     }
 
-    public void sendPixel(Pixel pixel) {
+    public Future<Void> sendPixel(Pixel pixel) {
         if (!canPlace()) throw new RuntimeException("Wait > 0: " + wait);
 
         ByteBuffer buffer = ByteBuffer.allocate(4);
@@ -67,12 +68,16 @@ public class PixelAccount implements MessageHandler {
         buffer.flip();
 
         wait += ttl + 1;
-        websocketClient.sendBinary(buffer);
+        return websocketClient.sendBinary(buffer);
     }
 
     @Override
     public void handleMessage(String message) {
-        System.out.println("Message: " + message);
+        if(message.equals("DOUBLE_CONNECT")) {
+            System.out.println("Double connect. Reconnecting.");
+            websocketClient.close();
+            return;
+        }
         if(message.equals("restart")) {
             System.out.println("Server asked for a restart :)");
             websocketClient.close();

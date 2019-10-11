@@ -1,14 +1,14 @@
 package ru.darkkeks.pixel;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HealthCheck {
 
     private Map<Pixel, LoginCredentials> toConfirm;
 
     public HealthCheck() {
-        this.toConfirm = new HashMap<>();
+        this.toConfirm = new ConcurrentHashMap<>();
     }
 
     public void onPixel(Pixel pixel) {
@@ -20,9 +20,9 @@ public class HealthCheck {
     }
 
     public boolean checkHealth(Pixel pixel) {
-        if(toConfirm.containsKey(pixel)) {
-            System.out.println("Unhealthy account! " + toConfirm.get(pixel).toString());
-            toConfirm.remove(pixel);
+        LoginCredentials credentials = toConfirm.remove(pixel);
+        if(credentials != null) {
+            System.out.println("Unhealthy account! " + credentials.toString());
             return false;
         }
         return true;

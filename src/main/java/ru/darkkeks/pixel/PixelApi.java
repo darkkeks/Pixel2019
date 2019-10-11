@@ -39,7 +39,6 @@ public class PixelApi {
 
     public CompletableFuture<JsonObject> start() {
         return makeRequest("/start", HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
-            System.out.println(response.body());
             JsonObject result = JsonParser.parseString(response.body()).getAsJsonObject();
             if (result.has("error")) {
                 throw new ApiException(result);
@@ -48,7 +47,7 @@ public class PixelApi {
         });
     }
 
-    public CompletableFuture<BufferedImage> data(/*String dataUrl*/) {
+    public CompletableFuture<BufferedImage> data() {
         int hour = LocalDateTime.now().getHour();
         int minute = LocalDateTime.now().getMinute();
         return makeRequest("/data" + String.format("?ts=%d-%d", hour, minute),

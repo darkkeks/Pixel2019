@@ -35,12 +35,6 @@ def get_url(token):
 # exit(0)
 
 accs = [
-    'login:pass',
-    'login:pass',
-    'login:pass',
-    'login:pass',
-    'login:pass',
-    'login:pass'
 ]
 
 for account in accs:

@@ -6,11 +6,8 @@ import ru.darkkeks.pixel.graphics.Template;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.http.HttpClient;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Controller {
 
@@ -27,11 +24,15 @@ public class Controller {
     private HealthCheck healthCheck;
     private int lastMinuteStats;
 
+    private BlockingQueue<Integer> speedQueue;
+
     public Controller(LoginCredentials observerCredentials, Template template) {
         this.template = template;
-        this.accounts = new HashSet<>();
+        this.accounts = ConcurrentHashMap.newKeySet();
 
-        executor = new ScheduledThreadPoolExecutor(4); // TODO Single thread to prevent threading issues :)
+        this.speedQueue = new ArrayBlockingQueue<>(128);
+
+        executor = new ScheduledThreadPoolExecutor(24);
         graphics = new BoardGraphics(new BufferedImage(Constants.WIDTH, Constants.HEIGHT, BufferedImage.TYPE_INT_RGB));
         graphics.setTemplate(template);
         httpClient = HttpClient.newHttpClient();
@@ -51,25 +52,46 @@ public class Controller {
 
     private void runBot() {
         executor.scheduleAtFixedRate(() -> {
-            System.out.println("Accounts active: " + accounts.size());
-            System.out.println("Current queue size: " + queue.size());
-            accounts.forEach(account -> {
-                if (account.canPlace()) {
-                    if (queue.size() > 0) {
-                        PixelQueue.Point point = queue.pop();
-                        Color color = template.getColor(point.getX(), point.getY());
-                        System.out.println("Placing pixel x=" + point.getX() + ", y=" + point.getY());
-                        Pixel pixel = Pixel.place(point.getX(), point.getY(), color);
-                        account.sendPixel(pixel);
-                        healthCheck.onPixel(pixel);
-                        executor.schedule(() -> {
-                            if (healthCheck.checkHealth(pixel)) {
-                                lastMinuteStats++;
-                            }
-                        }, 10, TimeUnit.SECONDS);
+            String output = String.format("Accounts active: %5d, queue size: %5d", accounts.size(), queue.size());
+
+            speedQueue.offer(queue.size());
+            if(speedQueue.size() > 60) {
+                int prev = speedQueue.poll();
+                output += String.format(", current speed: %5.2f pixels/second", (prev - queue.size()) / 60d);
+            }
+
+            System.out.println(output);
+
+            try {
+                accounts.forEach(account -> {
+                    if (account.canPlace()) {
+                        if (queue.size() > 0) {
+                            PixelQueue.Point point = queue.pop();
+                            Color color = template.getColor(point.getX(), point.getY());
+                            System.out.println("Placing pixel x=" + point.getX() + ", y=" + point.getY());
+                            Pixel pixel = Pixel.place(point.getX(), point.getY(), color);
+                            CompletableFuture.supplyAsync(() -> {
+                                healthCheck.onPlace(pixel, account.getLoginSignature());
+                                try {
+                                    return account.sendPixel(pixel).get();
+                                } catch (InterruptedException | ExecutionException e) {
+                                    e.printStackTrace();
+                                }
+                                return null;
+                            }, executor).thenRun(() -> {
+                                executor.schedule(() -> {
+                                    if (healthCheck.checkHealth(pixel)) {
+                                        lastMinuteStats++;
+                                    }
+                                }, 10, TimeUnit.SECONDS);
+                            });
+                        }
                     }
-                }
-            });
+                });
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+            }
         }, 0, 1, TimeUnit.SECONDS);
 
         executor.scheduleAtFixedRate(() -> {
@@ -104,7 +126,6 @@ public class Controller {
     public CompletableFuture<PixelAccount> addAccount(LoginCredentials credentials) {
         PixelAccount account = new PixelAccount(credentials, httpClient, this::reconnect);
         return account.start().thenApply(v -> {
-            System.out.println("Started!");
             accounts.add(account);
             return account;
         });

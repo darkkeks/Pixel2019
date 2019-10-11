@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Future;
 
 @ClientEndpoint
 public class WebsocketClient {
@@ -13,7 +14,6 @@ public class WebsocketClient {
     private MessageHandler handler;
 
     public WebsocketClient(String endpoint, MessageHandler handler) {
-        System.out.println(endpoint);
         this.handler = handler;
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -44,8 +44,8 @@ public class WebsocketClient {
         handler.handleBinaryMessage(b);
     }
 
-    public void sendBinary(ByteBuffer buffer) {
-        userSession.getAsyncRemote().sendBinary(buffer);
+    public Future<Void> sendBinary(ByteBuffer buffer) {
+        return userSession.getAsyncRemote().sendBinary(buffer);
     }
 
     public void close() {

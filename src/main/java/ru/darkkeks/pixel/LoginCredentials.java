@@ -11,4 +11,11 @@ public class LoginCredentials {
     public String getSignature() {
         return signature;
     }
+
+    @Override
+    public String toString() {
+        return "LoginCredentials{" +
+                "signature='" + signature + '\'' +
+                '}';
+    }
 }

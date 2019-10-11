@@ -5,6 +5,7 @@ import ru.darkkeks.pixel.graphics.Template;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class PixelQueue {
@@ -17,7 +18,7 @@ public class PixelQueue {
         this.template = template;
         this.queue = new TreeSet<>(Comparator.comparingInt(p -> order.get(p)));
 
-        this.order = new HashMap<>();
+        this.order = new ConcurrentHashMap<>();
         for(int i = 0; i < Constants.WIDTH; ++i) {
             for(int j = 0; j < Constants.HEIGHT; ++j) {
                 order.put(new Point(i, j), ThreadLocalRandom.current().nextInt());
@@ -25,7 +26,7 @@ public class PixelQueue {
         }
     }
 
-    public void rebuild(BufferedImage currentBoard) {
+    public synchronized void rebuild(BufferedImage currentBoard) {
         queue.clear();
 
         for(int i = 0; i < Constants.WIDTH; ++i) {
@@ -38,7 +39,7 @@ public class PixelQueue {
         }
     }
 
-    public void onPixelChange(Pixel pixel) {
+    public synchronized void onPixelChange(Pixel pixel) {
         Color target = template.getColor(pixel.getX(), pixel.getY());
         if(target == null) return;
 
@@ -50,7 +51,7 @@ public class PixelQueue {
         }
     }
 
-    public Point pop() {
+    public synchronized Point pop() {
         Point result = queue.first();
         queue.remove(result);
         return result;
@@ -63,7 +64,6 @@ public class PixelQueue {
     public int size() {
         return queue.size();
     }
-
 
     public static class Point {
         private int x;
