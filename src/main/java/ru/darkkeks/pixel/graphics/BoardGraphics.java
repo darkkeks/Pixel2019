@@ -11,6 +11,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
+
 public class BoardGraphics {
 
     private static final int WIDTH = 700;
@@ -27,6 +28,8 @@ public class BoardGraphics {
     private double zoom;
     private boolean isShiftHeld;
     private boolean isCtrlHeld;
+    private boolean isAltHeld;
+    private boolean dragWithAlt;
 
     public BoardGraphics(BufferedImage initial) {
         canvas = new BoardCanvas(WIDTH, HEIGHT, initial);
@@ -140,14 +143,42 @@ public class BoardGraphics {
 
                 if (key == KeyEvent.VK_SHIFT) isShiftHeld = true;
                 if (key == KeyEvent.VK_CONTROL) isCtrlHeld = true;
-                if (key == KeyEvent.VK_ALT) isCtrlHeld = true; // For OSX: alt instead of ctrl
-                if (key == KeyEvent.VK_UP) offsetY -= getMoveStep();
-                if (key == KeyEvent.VK_LEFT) offsetX -= getMoveStep();
-                if (key == KeyEvent.VK_RIGHT) offsetX += getMoveStep();
-                if (key == KeyEvent.VK_DOWN) offsetY += getMoveStep();
-                if (key == KeyEvent.VK_PLUS) zoomInCenter();
-                if (key == KeyEvent.VK_MINUS) zoomOutCenter();
+                if (key == KeyEvent.VK_ALT) isAltHeld = true;
+                
+                if (isAltHeld) {
+                    int moveStep = (int) Math.ceil(getMoveStep());
+    
+                    // Move template
+                    if (key == KeyEvent.VK_UP) moveTemplate(0, -moveStep);
+                    if (key == KeyEvent.VK_LEFT) moveTemplate(-moveStep, 0);
+                    if (key == KeyEvent.VK_RIGHT) moveTemplate(moveStep, 0);
+                    if (key == KeyEvent.VK_DOWN) moveTemplate(0, moveStep);
+                    
+                    // Adjust template opacity
+                    if (key == KeyEvent.VK_PLUS) canvas.adjustTemplateOpacity(0.1f);
+                    if (key == KeyEvent.VK_EQUALS) canvas.adjustTemplateOpacity(0.1f);
+                    if (key == KeyEvent.VK_MINUS) canvas.adjustTemplateOpacity(-0.1f);
+                } else {
+                    // Move canvas
+                    if (key == KeyEvent.VK_UP) offsetY -= getMoveStep();
+                    if (key == KeyEvent.VK_LEFT) offsetX -= getMoveStep();
+                    if (key == KeyEvent.VK_RIGHT) offsetX += getMoveStep();
+                    if (key == KeyEvent.VK_DOWN) offsetY += getMoveStep();
+                    
+                    // Zoom in/out
+                    if (key == KeyEvent.VK_PLUS) zoomInCenter();
+                    if (key == KeyEvent.VK_EQUALS) zoomInCenter();
+                    if (key == KeyEvent.VK_MINUS) zoomOutCenter();
+                }
+    
+                // Toggle template visibility
                 if (key == KeyEvent.VK_SPACE) canvas.toggleTemplateVisibility();
+    
+                // Pause bot
+                //if (key == KeyEvent.VK_P) ;
+                
+                // Show about/help box
+                //if (key == KeyEvent.VK_F1) ;
 
                 checkBorders();
                 updateTransform();
@@ -160,7 +191,7 @@ public class BoardGraphics {
 
                 if (key == KeyEvent.VK_SHIFT) isShiftHeld = false;
                 if (key == KeyEvent.VK_CONTROL) isCtrlHeld = false;
-                if (key == KeyEvent.VK_ALT) isCtrlHeld = false;
+                if (key == KeyEvent.VK_ALT) isAltHeld = false;
             }
         });
     }
@@ -204,6 +235,7 @@ public class BoardGraphics {
             public void mousePressed(MouseEvent e) {
                 mousePressedX = e.getX();
                 mousePressedY = e.getY();
+                dragWithAlt = isAltHeld;
             }
 
             @Override
@@ -217,18 +249,30 @@ public class BoardGraphics {
         canvas.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                offsetX += (mousePressedX - e.getX()) / zoom;
-                offsetY += (mousePressedY - e.getY()) / zoom;
-
-                mousePressedX = e.getX();
-                mousePressedY = e.getY();
+                if (dragWithAlt) {
+                    int ox = (int) ((mousePressedX - e.getX()) / zoom);
+                    int oy = (int) ((mousePressedY - e.getY()) / zoom);
+    
+                    canvas.translateTemplate(-ox, -oy);
+                    
+                    mousePressedX -= ox * zoom;
+                    mousePressedY -= oy * zoom;
+                } else {
+                    offsetX += (mousePressedX - e.getX()) / zoom;
+                    offsetY += (mousePressedY - e.getY()) / zoom;
+    
+                    mousePressedX = e.getX();
+                    mousePressedY = e.getY();
+                }
 
                 checkBorders();
                 updateTransform();
                 redraw();
             }
 
-            @Override public void mouseMoved(MouseEvent e) {}
+            @Override public void mouseMoved(MouseEvent e) {
+            
+            }
         });
     }
 }

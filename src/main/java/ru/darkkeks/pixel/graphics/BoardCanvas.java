@@ -61,6 +61,15 @@ public class BoardCanvas extends JPanel {
         repaint();
     }
     
+    public void adjustTemplateOpacity(float diff) {
+        setTemplateOpacity(templateOpacity + diff);
+    }
+    
+    public void setTemplateOpacity(float opacity) {
+        opacity = Math.max(Math.min(opacity, 1f), 0f);
+        templateOpacity = opacity;
+    }
+    
     public void toggleTemplateVisibility() {
         setTemplateVisibility(!templateVisible);
     }
