@@ -255,7 +255,7 @@ public class BoardGraphics {
                     int ox = (int) ((mousePressedX - e.getX()) / zoom);
                     int oy = (int) ((mousePressedY - e.getY()) / zoom);
     
-                    canvas.translateTemplate(-ox, -oy);
+                    moveTemplate(-ox, -oy);
                     
                     mousePressedX -= ox * zoom;
                     mousePressedY -= oy * zoom;
