@@ -14,6 +14,7 @@ public class WebsocketClient {
     private MessageHandler handler;
 
     public WebsocketClient(String endpoint, MessageHandler handler) {
+//        System.out.println(endpoint);
         this.handler = handler;
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();

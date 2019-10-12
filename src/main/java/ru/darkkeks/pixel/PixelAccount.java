@@ -47,7 +47,7 @@ public class PixelAccount implements MessageHandler {
     private void connectWebSocket() {
         websocketClient = new WebsocketClient(PixelApi.WS_URL + wsUrl +
                 loginSignature.getSignature() +
-                "&s=" + sign +
+                "&s=" + 9 +
                 "&c=" + Util.evaluateJS(code), this);
     }
 
@@ -73,6 +73,7 @@ public class PixelAccount implements MessageHandler {
 
     @Override
     public void handleMessage(String message) {
+//        System.out.println(message);
         if(message.equals("DOUBLE_CONNECT")) {
             System.out.println("Double connect. Reconnecting.");
             websocketClient.close();
