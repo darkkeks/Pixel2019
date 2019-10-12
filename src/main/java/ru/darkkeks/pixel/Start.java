@@ -6,15 +6,19 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.WatchEvent;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.stream.Collectors;
 
 public class Start {
 
-    public static void main(String[] args) throws IOException {
-        BufferedImage image = ImageIO.read(new File("template.png"));
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        BufferedImage image = loadImage("template.png");
 
         List<String> urls = Files.lines(new File("urls.txt").toPath()).collect(Collectors.toList());
         ListIterator<String> iterator = urls.listIterator();
@@ -23,5 +27,36 @@ public class Start {
         iterator.forEachRemaining(url -> {
             controller.addAccount(new LoginCredentials(url));
         });
+        
+        // Watch dir for changes
+        Path dir = Paths.get(".");
+        
+        DirectoryWatcher watcher = new DirectoryWatcher(dir) {
+            @Override
+            protected void onEvent(WatchEvent event) {
+                try {
+                    handleWatcherEvent(event, controller);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        
+        new Thread(watcher).start();
+    }
+    
+    static BufferedImage loadImage(String path) throws IOException {
+        return ImageIO.read(new File(path));
+    }
+    
+    static void handleWatcherEvent(WatchEvent event, Controller controller) throws IOException {
+        System.out.println("Watcher: " + event.kind() + ", " + event.context());
+        if ( !event.kind().name().equals("ENTRY_DELETE") ) {
+            System.out.println("Watcher: " + event.kind() + " proceeds");
+            if ( event.context().toString().equals("template.png") ) {
+                System.out.println("Watcher: " + event.context() + " wins!");
+                controller.updateTemplate(new Template(loadImage("template.png")));
+            }
+        }
     }
 }

@@ -12,8 +12,8 @@ import java.util.concurrent.*;
 public class Controller {
 
     private final HttpClient httpClient;
-    private final Template template;
     private final PixelQueue queue;
+    private Template template;
     private PixelAccount observer;
 
     private BoardGraphics graphics;
@@ -150,6 +150,12 @@ public class Controller {
                 graphics.setPixel(pixel.getX(), pixel.getY(), pixel.getColor());
             }
         });
+    }
+    
+    public void updateTemplate(Template newTemplate) {
+        template = newTemplate;
+        graphics.setTemplate(template);
+        requestQueueRebuild();
     }
     
     public static void requestQueueRebuild() {
