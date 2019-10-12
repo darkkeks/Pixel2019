@@ -2,7 +2,6 @@ package ru.darkkeks.pixel.graphics;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
@@ -44,8 +43,11 @@ public class BoardCanvas extends JPanel {
         if(template != null && templateVisible) {
             RescaleOp filter = new RescaleOp(new float[]{1f, 1f, 1f, templateOpacity}, new float[4], null);
             BufferedImage filtered = filter.filter(template.getImage(), null);
-
-            g2.drawImage(filtered, transform, null);
+            
+            AffineTransform templateTransform = new AffineTransform(transform);
+            templateTransform.translate(template.getOffset().x, template.getOffset().y);
+            
+            g2.drawImage(filtered, templateTransform, null);
         }
     }
 
@@ -69,6 +71,19 @@ public class BoardCanvas extends JPanel {
     
     public boolean isTemplateVisible() {
         return templateVisible;
+    }
+    
+    public void translateTemplate(int dx, int dy) {
+        setTemplateLocation(template.getOffset().x + dx, template.getOffset().y + dy);
+    }
+    
+    public void setTemplateLocation(int x, int y) {
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x > canvas.getWidth() - template.getWidth()) x = canvas.getWidth() - template.getWidth();
+        if (y > canvas.getHeight() - template.getHeight()) y = canvas.getHeight() - template.getHeight();
+        
+        template.setLocation(x, y);
     }
     
     public AffineTransform getTransform() {

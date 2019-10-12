@@ -4,7 +4,10 @@ import ru.darkkeks.pixel.graphics.Template;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -28,19 +31,25 @@ public class PixelQueue {
 
     public synchronized void rebuild(BufferedImage currentBoard) {
         queue.clear();
-
-        for(int i = 0; i < Constants.WIDTH; ++i) {
-            for(int j = 0; j < Constants.HEIGHT; ++j) {
-                Color target = template.getColor(i, j);
-                if(target != null && currentBoard.getRGB(i, j) != target.getRGB()) {
-                    queue.add(new Point(i, j));
-                }
-            }
-        }
+        java.awt.Point offset = template.getOffset();
+        
+        for (Template.TemplatePixel pixel : template.getPixels())
+            if (pixel.color != null
+                    && currentBoard.getRGB(offset.x + pixel.x, offset.y + pixel.y) != pixel.color.getRGB())
+                queue.add(new Point(offset.x + pixel.x, offset.y + pixel.y));
+        
+        //for(int i = 0; i < Constants.WIDTH; ++i) {
+        //    for(int j = 0; j < Constants.HEIGHT; ++j) {
+        //        Color target = template.getColor(i, j);
+        //        if(target != null && currentBoard.getRGB(i, j) != target.getRGB()) {
+        //            queue.add(new Point(i, j));
+        //        }
+        //    }
+        //}
     }
 
     public synchronized void onPixelChange(Pixel pixel) {
-        Color target = template.getColor(pixel.getX(), pixel.getY());
+        Color target = template.getColorAbs(pixel.getX(), pixel.getY());
         if(target == null) return;
 
         Color color = pixel.getColor();

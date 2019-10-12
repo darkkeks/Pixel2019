@@ -1,6 +1,7 @@
 package ru.darkkeks.pixel.graphics;
 
 import ru.darkkeks.pixel.Constants;
+import ru.darkkeks.pixel.Controller;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,6 +122,11 @@ public class BoardGraphics {
     private void updateTransform() {
         transform.setToScale(zoom, zoom);
         transform.translate(-offsetX, -offsetY);
+    }
+    
+    private void moveTemplate(int dx, int dy) {
+        canvas.translateTemplate(dx, dy);
+        Controller.requestQueueRebuild();
     }
 
     private void setupKeyListener() {
