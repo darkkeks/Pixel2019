@@ -134,12 +134,14 @@ public class BoardGraphics {
 
                 if (key == KeyEvent.VK_SHIFT) isShiftHeld = true;
                 if (key == KeyEvent.VK_CONTROL) isCtrlHeld = true;
+                if (key == KeyEvent.VK_ALT) isCtrlHeld = true; // For OSX: alt instead of ctrl
                 if (key == KeyEvent.VK_UP) offsetY -= getMoveStep();
                 if (key == KeyEvent.VK_LEFT) offsetX -= getMoveStep();
                 if (key == KeyEvent.VK_RIGHT) offsetX += getMoveStep();
                 if (key == KeyEvent.VK_DOWN) offsetY += getMoveStep();
                 if (key == KeyEvent.VK_PLUS) zoomInCenter();
                 if (key == KeyEvent.VK_MINUS) zoomOutCenter();
+                if (key == KeyEvent.VK_SPACE) canvas.toggleTemplateVisibility();
 
                 checkBorders();
                 updateTransform();
@@ -152,6 +154,7 @@ public class BoardGraphics {
 
                 if (key == KeyEvent.VK_SHIFT) isShiftHeld = false;
                 if (key == KeyEvent.VK_CONTROL) isCtrlHeld = false;
+                if (key == KeyEvent.VK_ALT) isCtrlHeld = false;
             }
         });
     }

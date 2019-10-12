@@ -17,6 +17,7 @@ public class BoardCanvas extends JPanel {
     private Template template;
 
     private float templateOpacity;
+    private boolean templateVisible = true;
 
     public BoardCanvas(int width, int height, BufferedImage canvas) {
         this.width = width;
@@ -40,7 +41,7 @@ public class BoardCanvas extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.drawImage(canvas, transform, null);
 
-        if(template != null) {
+        if(template != null && templateVisible) {
             RescaleOp filter = new RescaleOp(new float[]{1f, 1f, 1f, templateOpacity}, new float[4], null);
             BufferedImage filtered = filter.filter(template.getImage(), null);
 
@@ -57,7 +58,19 @@ public class BoardCanvas extends JPanel {
         this.template = template;
         repaint();
     }
-
+    
+    public void toggleTemplateVisibility() {
+        setTemplateVisibility(!templateVisible);
+    }
+    
+    public void setTemplateVisibility(boolean visibility) {
+        templateVisible = visibility;
+    }
+    
+    public boolean isTemplateVisible() {
+        return templateVisible;
+    }
+    
     public AffineTransform getTransform() {
         return transform;
     }
