@@ -50,11 +50,9 @@ public class Start {
     }
     
     static void handleWatcherEvent(WatchEvent event, Controller controller) throws IOException {
-        System.out.println("Watcher: " + event.kind() + ", " + event.context());
         if ( !event.kind().name().equals("ENTRY_DELETE") ) {
-            System.out.println("Watcher: " + event.kind() + " proceeds");
             if ( event.context().toString().equals("template.png") ) {
-                System.out.println("Watcher: " + event.context() + " wins!");
+                System.out.println("New template is loading");
                 controller.updateTemplate(new Template(loadImage("template.png")));
             }
         }
