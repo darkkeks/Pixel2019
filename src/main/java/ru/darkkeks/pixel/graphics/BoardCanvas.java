@@ -43,10 +43,10 @@ public class BoardCanvas extends JPanel {
         if(template != null && templateVisible) {
             RescaleOp filter = new RescaleOp(new float[]{1f, 1f, 1f, templateOpacity}, new float[4], null);
             BufferedImage filtered = filter.filter(template.getImage(), null);
-            
+
             AffineTransform templateTransform = new AffineTransform(transform);
             templateTransform.translate(template.getOffset().x, template.getOffset().y);
-            
+
             g2.drawImage(filtered, templateTransform, null);
         }
     }

@@ -10,12 +10,17 @@ import java.util.concurrent.Future;
 @ClientEndpoint
 public class WebsocketClient {
 
+    private final String endpoint;
     private Session userSession = null;
     private MessageHandler handler;
 
     public WebsocketClient(String endpoint, MessageHandler handler) {
-//        System.out.println(endpoint);
+        System.out.println(endpoint);
+        this.endpoint = endpoint;
         this.handler = handler;
+    }
+
+    public void start() {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, new URI(endpoint));
@@ -47,6 +52,10 @@ public class WebsocketClient {
 
     public Future<Void> sendBinary(ByteBuffer buffer) {
         return userSession.getAsyncRemote().sendBinary(buffer);
+    }
+
+    public Future<Void> sendString(String string) {
+        return userSession.getAsyncRemote().sendText(string);
     }
 
     public void close() {

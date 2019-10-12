@@ -1,7 +1,6 @@
 package ru.darkkeks.pixel.graphics;
 
 import ru.darkkeks.pixel.Constants;
-import ru.darkkeks.pixel.Controller;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +22,9 @@ public class BoardGraphics {
 
     private BoardCanvas canvas;
     private JFrame frame;
+
     private BoardClickListener boardClickListener;
+    private Runnable onTemplateUpdate;
 
     private AffineTransform transform;
     private double offsetX, offsetY, mousePressedX, mousePressedY;
@@ -73,10 +74,17 @@ public class BoardGraphics {
 
     public void setTemplate(Template template) {
         canvas.setTemplate(template);
+        if(onTemplateUpdate != null) {
+            onTemplateUpdate.run();
+        }
     }
 
     public void setBoardClickListener(BoardClickListener listener) {
         this.boardClickListener = listener;
+    }
+
+    public void setOnTemplateUpdate(Runnable onTemplateUpdate) {
+        this.onTemplateUpdate = onTemplateUpdate;
     }
 
     private double getMoveStep() {
@@ -131,7 +139,9 @@ public class BoardGraphics {
     
     private void moveTemplate(int dx, int dy) {
         canvas.translateTemplate(dx, dy);
-        Controller.requestQueueRebuild();
+        if(onTemplateUpdate != null) {
+            onTemplateUpdate.run();
+        }
     }
 
     private void setupKeyListener() {

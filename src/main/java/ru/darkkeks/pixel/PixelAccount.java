@@ -49,6 +49,7 @@ public class PixelAccount implements MessageHandler {
                 loginSignature.getSignature() +
                 "&s=" + 9 +
                 "&c=" + Util.evaluateJS(code), this);
+        websocketClient.start();
     }
 
     public void tick() {
@@ -73,7 +74,7 @@ public class PixelAccount implements MessageHandler {
 
     @Override
     public void handleMessage(String message) {
-//        System.out.println(message);
+        if(!message.contains("deadline")) System.out.println(message);
         if(message.equals("DOUBLE_CONNECT")) {
             System.out.println("Double connect. Reconnecting.");
             websocketClient.close();
@@ -95,7 +96,13 @@ public class PixelAccount implements MessageHandler {
                 if(result.has("wait")) {
                     wait = result.get("wait").getAsInt();
                 }
-                ttl = result.get("ttl").getAsInt();
+                if(result.has("ttl")) {
+                    ttl = result.get("ttl").getAsInt();
+                }
+
+                if (result.has("code")) {
+                    websocketClient.sendString("R" + Util.evaluateJS(result.get("code").getAsString()));
+                }
                 break;
             case 3:
                 System.out.println("Server asked for a restart :)");

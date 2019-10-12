@@ -10,6 +10,10 @@ mainClassName = 'ru.darkkeks.pixel.Start'
 
 sourceCompatibility = 1.8
 
+application {
+    applicationDefaultJvmArgs = ['-Dnashorn.args="--no-deprecation-warning"']
+}
+
 repositories {
     mavenCentral()
 }
