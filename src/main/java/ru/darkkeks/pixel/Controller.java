@@ -25,6 +25,8 @@ public class Controller {
     private int lastMinuteStats;
 
     private BlockingQueue<Integer> speedQueue;
+    
+    private static boolean needQueueRebuild = false;
 
     public Controller(LoginCredentials observerCredentials, Template template) {
         this.template = template;
@@ -53,6 +55,10 @@ public class Controller {
     private void runBot() {
         executor.scheduleAtFixedRate(() -> {
             String output = String.format("Accounts active: %5d, queue size: %5d", accounts.size(), queue.size());
+            
+            if (needQueueRebuild) {
+                queue.rebuild(graphics.getImage());
+            }
 
             speedQueue.offer(queue.size());
             if(speedQueue.size() > 60) {
@@ -67,7 +73,7 @@ public class Controller {
                     if (account.canPlace()) {
                         if (queue.size() > 0) {
                             PixelQueue.Point point = queue.pop();
-                            Color color = template.getColor(point.getX(), point.getY());
+                            Color color = template.getColorAbs(point.getX(), point.getY());
                             System.out.println("Placing pixel x=" + point.getX() + ", y=" + point.getY());
                             Pixel pixel = Pixel.place(point.getX(), point.getY(), color);
                             CompletableFuture.supplyAsync(() -> {
@@ -144,5 +150,9 @@ public class Controller {
                 graphics.setPixel(pixel.getX(), pixel.getY(), pixel.getColor());
             }
         });
+    }
+    
+    public static void requestQueueRebuild() {
+        Controller.needQueueRebuild = true;
     }
 }
