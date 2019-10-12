@@ -25,7 +25,7 @@ public class Start {
         Controller controller = new Controller(new LoginCredentials(iterator.next()), new Template(image));
         iterator.remove();
         iterator.forEachRemaining(url -> {
-            controller.addAccount(new LoginCredentials(url));
+            if (url.startsWith("?")) controller.addAccount(new LoginCredentials(url));
         });
         
         // Watch dir for changes
