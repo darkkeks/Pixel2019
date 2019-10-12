@@ -12,20 +12,21 @@ public class Util {
 
     private static final String PREFIX =
             "window = {\n" +
-            "    Math: Math,\n" +
-            "    parseInt: parseInt,\n" +
-            "    location: { \n" +
-            "        host: \"https://vk.com\" \n" +
-            "    },\n" +
-            "    WebSocket: {kek:1}\n" +
-            "};\n" +
-            "document = {\n" +
-            "    createElement: function(name) {\n" +
-            "         return {\n" +
-            "             tagName: name.toUpperCase()\n" +
-            "         };\n" +
-            "    }\n" +
-            "};\n";
+                    "    Math: Math,\n" +
+                    "    parseInt: parseInt,\n" +
+                    "    location: { \n" +
+                    "        host: \"https://vk.com\" \n" +
+                    "    },\n" +
+                    "    WebSocket: {kek:1}\n" +
+                    "};\n" +
+                    "document = {\n" +
+                    "    createElement: function(name) {\n" +
+                    "         return {\n" +
+                    "             tagName: name.toUpperCase()\n" +
+                    "         };\n" +
+                    "    }\n" +
+                    "};\n" +
+                    "setTimeout = function() { return 0; }; \n";
 
     static {
         ScriptContext context = ENGINE.getContext();

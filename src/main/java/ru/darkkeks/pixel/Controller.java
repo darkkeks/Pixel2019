@@ -11,6 +11,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -30,6 +32,9 @@ public class Controller {
     private int lastMinuteStats;
 
     private BlockingQueue<Integer> speedQueue;
+
+    private boolean boardLoaded = false;
+    private List<Pixel> beforeLoad;
     
     public Controller(LoginCredentials observerCredentials, File templateFile) {
         this.template = Template.load(templateFile);
@@ -42,6 +47,7 @@ public class Controller {
         graphics.setTemplate(template);
         httpClient = HttpClient.newHttpClient();
 
+        beforeLoad = new ArrayList<>();
         healthCheck = new HealthCheck();
         queue = new PixelQueue(template);
 
@@ -94,6 +100,7 @@ public class Controller {
             System.out.println(output);
 
             try {
+                if(!boardLoaded) return;
                 accounts.forEach(account -> {
                     if (account.canPlace()) {
                         if (!queue.isEmpty()) {
@@ -165,15 +172,24 @@ public class Controller {
         observer.getPixelApi().data().thenAccept(board -> {
             graphics.updateBoard(board);
             queue.rebuild(board);
+
+            boardLoaded = true;
+            beforeLoad.forEach(this::onPixel);
         });
 
-        observer.setPixelConsumer(pixel -> {
-            healthCheck.onPixel(pixel);
-            queue.onPixelChange(pixel);
-            if (graphics != null) {
-                graphics.setPixel(pixel.getX(), pixel.getY(), pixel.getColor());
-            }
-        });
+        observer.setPixelConsumer(this::onPixel);
+    }
+
+    private void onPixel(Pixel pixel) {
+        if(!boardLoaded) {
+            beforeLoad.add(pixel);
+        }
+
+        healthCheck.onPixel(pixel);
+        queue.onPixelChange(pixel);
+        if (graphics != null) {
+            graphics.setPixel(pixel.getX(), pixel.getY(), pixel.getColor());
+        }
     }
     
     private void updateTemplate(Template newTemplate) {

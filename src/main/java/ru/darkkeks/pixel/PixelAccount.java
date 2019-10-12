@@ -76,7 +76,7 @@ public class PixelAccount implements MessageHandler {
     public void handleMessage(String message) {
         if(!message.contains("deadline")) System.out.println(message);
         if(message.equals("DOUBLE_CONNECT")) {
-            System.out.println("Double connect. Reconnecting.");
+            System.out.println("Double connect. Reconnecting." + loginSignature.getSignature());
             websocketClient.close();
             return;
         }

@@ -19,7 +19,7 @@ public class PixelQueue {
 
     public PixelQueue(Template template) {
         this.template = template;
-        this.queue = new TreeSet<>(Comparator.comparingInt(p -> order.get(p)));
+        this.queue = new TreeSet<>(Comparator.comparingInt(p -> p.getY() * 10000 + p.getX()));
 
         this.order = new ConcurrentHashMap<>();
         for (int i = 0; i < Constants.WIDTH; ++i) {
