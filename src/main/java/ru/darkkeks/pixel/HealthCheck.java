@@ -22,7 +22,8 @@ public class HealthCheck {
     public boolean checkHealth(Pixel pixel) {
         LoginCredentials credentials = toConfirm.remove(pixel);
         if(credentials != null) {
-            System.out.println("Unhealthy account! " + credentials.toString());
+            System.out.println("Unhealthy account! "
+                    + credentials.toString().split("vk_user_id=")[1].split("&")[0]);
             return false;
         }
         return true;

@@ -6,7 +6,6 @@ import ru.darkkeks.pixel.graphics.Template;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.FileSystems;
 import java.nio.file.StandardWatchEventKinds;
@@ -62,7 +61,7 @@ public class Controller {
         executor.submit(() -> {
             try {
                 WatchService watchService = FileSystems.getDefault().newWatchService();
-                templateFile.getParentFile().toPath().register(watchService,
+                templateFile.getAbsoluteFile().getParentFile().toPath().register(watchService,
                         StandardWatchEventKinds.ENTRY_CREATE,
                         StandardWatchEventKinds.ENTRY_MODIFY);
 
@@ -76,7 +75,7 @@ public class Controller {
                     });
                     key.reset();
                 }
-            } catch (IOException | InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         });
