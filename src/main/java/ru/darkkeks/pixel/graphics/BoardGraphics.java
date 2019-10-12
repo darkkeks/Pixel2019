@@ -13,6 +13,8 @@ import java.awt.image.BufferedImage;
 
 
 public class BoardGraphics {
+    
+    private static final String TITLE = "PxlsCLI";
 
     private static final int WIDTH = 700;
     private static final int HEIGHT = 400;
@@ -40,7 +42,7 @@ public class BoardGraphics {
         this.zoom = 1;
 
         if(System.getenv("nogui") == null) {
-            frame = new JFrame("PxlsCLI");
+            frame = new JFrame(TITLE);
             frame.add(canvas);
             frame.setResizable(false);
             frame.pack();
@@ -271,8 +273,13 @@ public class BoardGraphics {
             }
 
             @Override public void mouseMoved(MouseEvent e) {
-            
+                Point point = getPixelUnderCursor(e.getX(), e.getY());
+                frame.setTitle(String.format("%s (%d:%d)", TITLE, point.x, point.y));
             }
         });
+    }
+    
+    private Point getPixelUnderCursor(int mouseX, int mouseY) {
+        return new Point((int) (mouseX / zoom + offsetX), (int) (mouseY / zoom + offsetY));
     }
 }
