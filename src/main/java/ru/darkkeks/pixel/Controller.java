@@ -5,7 +5,13 @@ import ru.darkkeks.pixel.graphics.Template;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.net.http.HttpClient;
+import java.nio.file.FileSystems;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -26,10 +32,8 @@ public class Controller {
 
     private BlockingQueue<Integer> speedQueue;
     
-    private static boolean needQueueRebuild = false;
-
-    public Controller(LoginCredentials observerCredentials, Template template) {
-        this.template = template;
+    public Controller(LoginCredentials observerCredentials, File templateFile) {
+        this.template = Template.load(templateFile);
         this.accounts = ConcurrentHashMap.newKeySet();
 
         this.speedQueue = new ArrayBlockingQueue<>(128);
@@ -50,16 +54,38 @@ public class Controller {
         });
 
         runBot();
+
+        graphics.setOnTemplateUpdate(() -> {
+            queue.rebuild(graphics.getImage());
+        });
+
+        executor.submit(() -> {
+            try {
+                WatchService watchService = FileSystems.getDefault().newWatchService();
+                templateFile.getParentFile().toPath().register(watchService,
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_MODIFY);
+
+                WatchKey key;
+                while((key = watchService.take()) != null) {
+                    key.pollEvents().forEach(watchEvent -> {
+                        if(watchEvent.context().toString().equals(templateFile.getName())) {
+                            updateTemplate(Template.load(templateFile));
+                            System.out.println("Template modified. Updating!");
+                        }
+                    });
+                    key.reset();
+                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void runBot() {
         executor.scheduleAtFixedRate(() -> {
             String output = String.format("Accounts active: %5d, queue size: %5d", accounts.size(), queue.size());
             
-            if (needQueueRebuild) {
-                queue.rebuild(graphics.getImage());
-            }
-
             speedQueue.offer(queue.size());
             if(speedQueue.size() > 60) {
                 int prev = speedQueue.poll();
@@ -71,7 +97,7 @@ public class Controller {
             try {
                 accounts.forEach(account -> {
                     if (account.canPlace()) {
-                        if (queue.size() > 0) {
+                        if (!queue.isEmpty()) {
                             PixelQueue.Point point = queue.pop();
                             Color color = template.getColorAbs(point.getX(), point.getY());
                             System.out.println("Placing pixel x=" + point.getX() + ", y=" + point.getY());
@@ -95,7 +121,6 @@ public class Controller {
                     }
                 });
             } catch (Exception e) {
-                System.out.println(e);
                 e.printStackTrace();
             }
         }, 0, 1, TimeUnit.SECONDS);
@@ -152,8 +177,10 @@ public class Controller {
         });
     }
     
-    public void updateTemplate(Template newTemplate) {
+    private void updateTemplate(Template newTemplate) {
         template = newTemplate;
         graphics.setTemplate(template);
+        queue.setTemplate(template);
+        queue.rebuild(graphics.getImage());
     }
 }

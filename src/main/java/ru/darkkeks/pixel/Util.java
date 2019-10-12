@@ -10,13 +10,8 @@ public class Util {
 
     private static final ScriptEngine ENGINE = new ScriptEngineManager().getEngineByName("javascript");
 
-    static {
-        ScriptContext context = ENGINE.getContext();
-        StringWriter writer = new StringWriter();
-        context.setWriter(writer);
-    }
-
-    private static final String PREFIX = "window = {\n" +
+    private static final String PREFIX =
+            "window = {\n" +
             "    Math: Math,\n" +
             "    parseInt: parseInt,\n" +
             "    location: { \n" +
@@ -24,11 +19,26 @@ public class Util {
             "    },\n" +
             "    WebSocket: {kek:1}\n" +
             "};\n" +
-            "document = {createElement: function(name) {return {tagName: name.toUpperCase()};}};\n";
+            "document = {\n" +
+            "    createElement: function(name) {\n" +
+            "         return {\n" +
+            "             tagName: name.toUpperCase()\n" +
+            "         };\n" +
+            "    }\n" +
+            "};\n";
+
+    static {
+        ScriptContext context = ENGINE.getContext();
+        StringWriter writer = new StringWriter();
+        context.setWriter(writer);
+        try {
+            ENGINE.eval(PREFIX);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static String evaluateJS(String js) {
-        js = PREFIX + js;
-
         try {
             Object obj = ENGINE.eval(js);
             if(obj instanceof Double) {

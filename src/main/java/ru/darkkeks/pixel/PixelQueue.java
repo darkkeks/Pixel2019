@@ -22,8 +22,8 @@ public class PixelQueue {
         this.queue = new TreeSet<>(Comparator.comparingInt(p -> order.get(p)));
 
         this.order = new ConcurrentHashMap<>();
-        for(int i = 0; i < Constants.WIDTH; ++i) {
-            for(int j = 0; j < Constants.HEIGHT; ++j) {
+        for (int i = 0; i < Constants.WIDTH; ++i) {
+            for (int j = 0; j < Constants.HEIGHT; ++j) {
                 order.put(new Point(i, j), ThreadLocalRandom.current().nextInt());
             }
         }
@@ -32,28 +32,21 @@ public class PixelQueue {
     public synchronized void rebuild(BufferedImage currentBoard) {
         queue.clear();
         java.awt.Point offset = template.getOffset();
-        
-        for (Template.TemplatePixel pixel : template.getPixels())
-            if (pixel.color != null
-                    && currentBoard.getRGB(offset.x + pixel.x, offset.y + pixel.y) != pixel.color.getRGB())
+
+        for (Template.TemplatePixel pixel : template.getPixels()) {
+            if(pixel.color == null) continue;
+            if(currentBoard.getRGB(offset.x + pixel.x, offset.y + pixel.y) != pixel.color.getRGB()) {
                 queue.add(new Point(offset.x + pixel.x, offset.y + pixel.y));
-        
-        //for(int i = 0; i < Constants.WIDTH; ++i) {
-        //    for(int j = 0; j < Constants.HEIGHT; ++j) {
-        //        Color target = template.getColor(i, j);
-        //        if(target != null && currentBoard.getRGB(i, j) != target.getRGB()) {
-        //            queue.add(new Point(i, j));
-        //        }
-        //    }
-        //}
+            }
+        }
     }
 
     public synchronized void onPixelChange(Pixel pixel) {
         Color target = template.getColorAbs(pixel.getX(), pixel.getY());
-        if(target == null) return;
+        if (target == null) return;
 
         Color color = pixel.getColor();
-        if(color == target) {
+        if (color == target) {
             queue.remove(new Point(pixel.getX(), pixel.getY()));
         } else {
             queue.add(new Point(pixel.getX(), pixel.getY()));
@@ -72,6 +65,10 @@ public class PixelQueue {
 
     public int size() {
         return queue.size();
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
     }
 
     public static class Point {
